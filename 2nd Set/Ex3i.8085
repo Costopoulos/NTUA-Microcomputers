@@ -1,0 +1,24 @@
+START:
+	LDA 2000H
+	MOV C,A ;store A value
+	CPI 00H
+	JZ START ;if input is zero try again
+	MVI B,00H ;stores the position of the first leftmost ON led
+
+ROTATE:
+	INR B ;B++
+	MOV A,B ;A=B
+	RRC ;rotate right since we started from leftmost
+	MOV B,A  
+	MOV A,C ;restore A value
+	RLC ;rotate left since we rotated right
+	MOV C,A ;store A value again
+	JC USELEDS ;if CY=1 go to the output function
+	JNC ROTATE ;if not, continue
+
+USELEDS:
+	MOV A,B ;
+	CMA ;leds are of complementary logic
+	STA 3000H
+	JMP START
+END

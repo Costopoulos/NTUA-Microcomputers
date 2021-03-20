@@ -1,0 +1,36 @@
+START:	LDA 2000H
+	MOV B,A ;input is at B
+	MOV H,A ;store A's value
+	RRC 
+	MOV C,A ;C=A when it is rotated right
+	ORA B ;A=B||C
+	MOV D,A ;store rotated A's value
+	ANI 01H ;keeps only the LSB
+	MOV E,A ;so we ve got the A0||B0
+	MOV A,D ;restore rotated A's value (B||C)
+	ANI 10H ;keeps the 5th LSB so A2||B2 (cause A0,B0 are the first 2 LSB and A1,B1 the next 2)
+	RRC
+	RRC
+	MOV D,A ;store A (A2||B2)
+	MOV A,H ; restore A's real value
+	ANA C ;A=B&&C
+	MOV B,A ;store temp A's value
+	ANI 04H ;keeps the 3rd LSB so A1&&B1 (cause A0, B0 are the first 2 LSB)
+	RRC
+	MOV C,A ;C=A1&&B1
+	MOV A,B ;restore temp A's value(B&&C)
+	ANI 40H ;keeps 7th LSB (A0,B0 first 2, A1,B1 next 2, A2,B2 next 2)
+	RRC
+	RRC
+	RRC
+	MOV B,A ;B=A3&&B3
+	MOV A,D ;A=A2||B2
+	RLC ;so we are in the correct led
+	XRA B ;XOR bit
+	ADD E ;print
+	ADD D ;print
+	ADD C ;print
+	CMA ;complementary logic
+	STA 3000H
+	JMP START ;program is required not to terminate
+END

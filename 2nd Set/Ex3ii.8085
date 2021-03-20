@@ -1,0 +1,34 @@
+IN 10H
+LXI B,01F4H ;loads delay
+
+START:
+	CALL KIND ;input  
+	CPI 05H   ;if less than 5 go to one to four
+	JC BETWEEN_1_4
+
+BETWEEN_1_5:
+	CPI 09H ;
+	JNC START ;if A>9 (CY=0) input again
+	MVI D,F0H ;MSB leds
+	JMP USELEDS
+BETWEEN_1_4:
+	CPI 01H ;if A<1 CY=1
+	JC START ;if CY=1 press again dear user
+	MVI D,0FH ;LSB leds
+USELEDS:
+	MVI E,00H ; 
+PRINT:
+	MOV A,D  ;takes the correct set of leds
+	CMA      ; leds are complementary
+	STA 3000H ;switch on LSB leds
+	CALL DELB ;call delay
+	MVI A,00H 
+	CMA
+	STA 3000H ;switch off all leds
+	CALL DELB
+	INR E
+	MOV A,E
+	CPI 04H ;if E<4 continue, else start the program from the beginning
+	JC PRINT
+	JMP START ;program should run forever
+END

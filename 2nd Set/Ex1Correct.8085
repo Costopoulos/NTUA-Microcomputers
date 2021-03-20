@@ -1,0 +1,70 @@
+IN 10H
+LXI H,0900H ;stores at H reg, could also do LXI H,09H -> LXI L,00H
+MVI A,FFH ;A=255
+
+START:
+	MOV M,A ;M is the default reg for HL double reg
+	DCR A ;A--
+	INX H ;H++
+	CPI 00H 
+	JZ ISZERO ;if A=0 (Z=1) go to iszero
+	JMP START ;else continue decreasing
+
+;ISZERO:
+	;MOV M,A ;these codes are only for the 1st question
+	;JMP FIN
+;END OF EX1A
+
+ISZERO:
+	MVI H,00H ;We use MOV D,H and E,L and we can't do that with LXI
+	MVI L,00H ;Look up
+	MVI A,FFH ;Restore A's value
+COUNTZEROS:
+	MVI B,08H ;B=8 since we have 8bit numbers
+	MOV C,A ;store A's value
+TAKE_EACH_BIT:
+	RRC ;CY=a0 (LSB of A)
+	JC DONT_INCR_H ;if a0=CY=1 dont increase H
+	INX H ;else increase it
+DONT_INCR_H:
+	DCR B ;B--(B is how many bits we have to check)
+	MOV D,A ;store A's value
+	MOV A,B ;need this for CPI
+	CPI 00H ; if A(=B) is zero(Z=1) we checked the whole number, so we go to the next
+	JZ GET_NEXT_NUMBER
+	MOV A,D ;restore A's value
+	JMP TAKE_EACH_BIT ;if B!=0 continue
+GET_NEXT_NUMBER:
+	MOV A,C ;restore A's value
+	CPI 00H ;
+	JZ FIN ;if A=0 finish
+	DCR A ;A--, it goes here cause otherwise(above MOV A,C) we would lose the final #(0)
+	JMP COUNTZEROS ;count the zeros of the next number
+
+FIN:
+	MOV D,H 
+	MOV E,L
+;RST 1
+;END OF EX1B
+	MVI C,00H
+	MVI A,FFH
+
+SMALLER_BIGGER:
+	CPI 20H ;if A<20H -> CY=1
+	JC NOT_OUR_CASE ;if CY=1 -> not our case
+	CPI 71H ;if A>=71H -> CY=0
+	JNC NOT_OUR_CASE
+	INR C ;C++ when A is higher(or equal) than 20H and lower(or equal) than 70H 
+	CPI 20H
+	JZ OUTPUT ;if A=20H->output
+	DCR A
+	JMP SMALLER_BIGGER
+
+	
+NOT_OUR_CASE:
+	DCR A ;A--
+	JMP SMALLER_BIGGER
+
+OUTPUT:
+	;RST 1
+	END

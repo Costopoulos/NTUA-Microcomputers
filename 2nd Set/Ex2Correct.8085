@@ -1,0 +1,72 @@
+IN 10H
+LXI B,00C8H ;this will help us create the desired delay
+
+FIND_ON:
+	CALL DELB ;force delay
+	LDA 2000H
+	ANI 01H ;keep only the LSB (A <- A && 00000001)
+	CPI 01H ;if A==1 then Led0 is ON
+	JNZ FIND_ON ;and if A!=1(Led0 is OFF) continue
+FIND_OFF:	
+	CALL DELB ;
+	LDA 2000H
+	ANI 01H ;A=LSB
+	CPI 00H ;if LSB==0(Led0=0) -> Z=1
+	JNZ FIND_OFF ;and if LSB!=0(Led0 is ON) continue
+
+AGAIN:	
+	MVI D,FFH ;seems good for approx 15 seconds
+	MVI A,FFH
+	MOV H,A 
+	MVI L,00H ;HL=FF00
+
+ON1:
+	MVI E,0AH ;speed of the leds when they are on and then off
+	MOV A,H
+	CMA ;complementary logic
+	MOV H,A
+	STA 3000H ;leds are on
+	MOV A,L
+	CPI 00H ;if A==0 -> find on again
+	JZ FIND_ON_AGAIN
+	JMP FIND_OFF_AGAIN ;else -> find off again
+
+FIND_ON_AGAIN:
+	MVI L,00H
+	CALL DELB
+	DCR D ;D--, to read extra delay
+	MOV A,D
+	CPI 00H ; if D==0 (delay reaches zero -> leds have beeped) jump to finish
+	JZ FIN
+	DCR E ;E--
+	MOV A,E
+	CPI 00H ; if E==0 jump to ON1 to find the off and on
+	JZ ON1
+	LDA 2000H
+	ANI 01H  ;A=LSB
+	CPI 01H ;if LSB==1 then Led0 is ON
+	JNZ FIND_ON_AGAIN ;else continue till you make it ON
+FIND_OFF_AGAIN:
+	MVI L,01H
+	CALL DELB
+	DCR D
+	MOV A,D
+	CPI 00H
+	JZ FIN
+	DCR E
+	MOV A,E
+	CPI 00H
+	JZ ON1
+	LDA 2000H
+	ANI 01H
+	CPI 00H ;if LSB==0 (Led0=0) -> you found the off!
+	JNZ FIND_OFF_AGAIN ;else continue
+	JMP AGAIN
+
+
+FIN: 
+	MVI A,FFH
+	STA 3000H
+	JMP FIND_ON ;program is required not to terminate
+
+END

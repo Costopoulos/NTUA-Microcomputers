@@ -1,0 +1,213 @@
+START:
+	IN 10H
+	LXI H,0B00H 
+	MVI M,10H
+	INX H
+	MVI M,10H
+	INX H
+	MVI M,10H
+	INX H
+	MVI M,10H
+	INX H
+	MVI M,10H ;only the first 2 segments will be non-empty
+
+	LXI B,03E8H ;B -> 1 sec delay
+	MVI A,0DH   ;A=13
+	SIM
+	EI	     ;enable interruptions
+
+INTERRUPT:
+	JMP INTERRUPT
+INTR_ROUTINE:
+	POP H  ;pop H from top of the stack
+	EI
+MSB:
+	CALL KIND ;read from numpad
+	
+	CPI 00H   ;if A==0(Z=1)
+	JZ STORE_MSB ;store the msb
+	
+	CPI 01H   ;if A==1(Z=1)
+	JZ STORE_MSB ;store the msb
+
+	CPI 02H   ;if A==2(Z=1)
+	JZ STORE_MSB ;store the msb
+
+	CPI 03H   ;if A==3(Z=1)
+	JZ STORE_MSB ;store the msb
+
+	CPI 04H   ;if A==4(Z=1)
+	JZ STORE_MSB ;store the msb
+
+	CPI 05H   ;if A==5(Z=1)
+	JZ STORE_MSB ;store the msb
+
+	CPI 06H   ;if A==6(Z=1)
+	JZ STORE_MSB ;store the msb
+
+	CPI 07H   ;if A==7(Z=1)
+	JZ STORE_MSB ;store the msb
+
+	CPI 08H   ;if A==8(Z=1)
+	JZ STORE_MSB ;store the msb
+
+	CPI 09H   ;if A==9(Z=1)
+	JZ STORE_MSB ;store the msb
+
+	CPI 0AH   ;if A==10(Z=1)
+	JZ STORE_MSB ;store the msb
+
+	CPI 0BH   ;if A==11(Z=1)
+	JZ STORE_MSB ;store the msb
+
+	CPI 0CH   ;if A==12(Z=1)
+	JZ STORE_MSB ;store the msb
+
+	CPI 0DH   ;if A==13(Z=1)
+	JZ STORE_MSB ;store the msb
+
+	CPI 0EH   ;if A==14(Z=1)
+	JZ STORE_MSB ;store the msb
+
+	CPI 0FH   ;if A==15(Z=1)
+	JZ STORE_MSB ;store the msb
+
+STORE_MSB:
+	LXI H,0B04H	
+	ANI 0FH
+	INX H	 ;H++
+	MOV M,A ;store A's value
+	DCX H	 ;H-- (H's values restored)
+	RLC
+	RLC
+	RLC
+	RLC     ;4 left shifts to get the wanted bits
+	MOV B,A 
+
+LSB:
+	CALL KIND ;read from numpad
+	
+	CPI 00H   ;if A==0(Z=1)
+	JZ STORE_LSB ;store the Lsb
+	
+	CPI 01H   ;if A==1(Z=1)
+	JZ STORE_LSB ;store the Lsb
+
+	CPI 02H   ;if A==2(Z=1)
+	JZ STORE_LSB ;store the Lsb
+
+	CPI 03H   ;if A==3(Z=1)
+	JZ STORE_LSB ;store the Lsb
+
+	CPI 04H   ;if A==4(Z=1)
+	JZ STORE_LSB ;store the Lsb
+
+	CPI 05H   ;if A==5(Z=1)
+	JZ STORE_LSB ;store the Lsb
+
+	CPI 06H   ;if A==6(Z=1)
+	JZ STORE_LSB ;store the Lsb
+
+	CPI 07H   ;if A==7(Z=1)
+	JZ STORE_LSB ;store the Lsb
+
+	CPI 08H   ;if A==8(Z=1)
+	JZ STORE_LSB ;store the Lsb
+
+	CPI 09H   ;if A==9(Z=1)
+	JZ STORE_LSB ;store the Lsb
+
+	CPI 0AH   ;if A==10(Z=1)
+	JZ STORE_LSB ;store the Lsb
+
+	CPI 0BH   ;if A==11(Z=1)
+	JZ STORE_LSB ;store the Lsb
+
+	CPI 0CH   ;if A==12(Z=1)
+	JZ STORE_LSB ;store the Lsb
+
+	CPI 0DH   ;if A==13(Z=1)
+	JZ STORE_LSB ;store the Lsb
+
+	CPI 0EH   ;if A==14(Z=1)
+	JZ STORE_LSB ;store the Lsb
+
+	CPI 0FH   ;if A==15(Z=1)
+	JZ STORE_LSB ;store the Lsb
+
+STORE_LSB:
+	ANI 0FH
+	MOV M,A  ;store A's value
+	LXI D,0B00H
+	CALL STDM
+	CALL DCD
+	ADD B
+	MOV B,A
+
+CONTINUE:
+	MVI C,10H ;K1=10H
+	MVI D,40H ;K2=40H
+	MVI E,80H ;K3=80H
+	
+	MOV A,B   ;restore A's value
+	CPI 11H   ;if A<=10H (CY=1)
+	MVI A,01H ;2^0=1 (led 0)
+	JC OUT	   ;print the 1st led
+	
+	MOV A,B   ;restore A's value
+	CPI 41H   ;if A<=40H (CY=1)
+	MVI A,02H ;2^1=2 (led 1)
+	JC OUT	   ;print the 2nd led
+
+	MOV A,B   ;restore A's value
+	CPI 81H   ;if A<=80H (CY=1)
+	MVI A,04H ;2^2=4 (led 2)
+	JC OUT	   ;print the 3rd led
+	
+	MVI A,08H ;else print the 4th led (2^3=8)
+
+OUT:
+	CMA 	   ;complementary logic
+	STA 3000H
+	JMP MSB
+END
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+
+

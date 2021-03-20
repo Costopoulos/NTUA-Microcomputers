@@ -1,0 +1,55 @@
+START: 
+IN 10H
+LXI B,0800H	       
+MVI C,01H	      	      ;C=1
+MVI D,80H
+MVI E,02H		       
+
+CONTINUE: 
+LDA 2000H   		     ;loads in A the value of the memory address 2000H
+RAR               		    ;CY is the LSB cause we rotated A right
+RAR               		    ;CY is the second LSB. Two right rotations of A
+JC EXIT          		     ;if CY(2nd LSB)==1(ON) exit
+RAL	          		     ;CY=LSB cause we rotated A left 1 time
+JNC LEFT_TO_RIGHT        ;if CY(LSB)==0(OFF) move from left to right
+     
+MOV D,E		;D=E
+MOV A,D		;A=D (thus A=E)
+CPI 80H                          ;compare A to 80H=128
+JZ RIGHT_TO_LEFT       ;if the last led is !=0 (On) move from right to left
+     
+MOV A,D         		;A=D
+CPI 01H                          ;compare A to 01H
+JZ LEFT_TO_RIGHT      ;if the first led is equal to zero left to right
+     
+MOV A,C		;A=C
+CPI 01H		;compare A to 01H
+JC LEFT_TO_RIGHT      ;if CY==1 -> left to right else right to left 
+
+RIGHT_TO_LEFT: 
+MVI C,01H 
+MVI C,01H
+MOV A,D		;backups D 
+RRC  			;rotate right since we’re moving from right->left
+MOV D,A		;restores the value of D
+JMP OUTPUT		;prints
+
+LEFT_TO_RIGHT: 
+MVI C,00H
+MOV A,D		
+RLC			;rotate right since we’re moving from left->right
+MOV D,A
+JMP OUTPUT
+
+EXIT: 
+MVI A,01H
+JMP OUTPUT		
+
+OUTPUT: 
+CMA			;complementary of 1 (A=A’), cause leds are complementary
+STA 3000H		;output is wanted at 3000H
+CALL DELB		;BCms delay
+MOV E,D
+JMP CONTINUE	;the program isn’t required to stop.
+END
+

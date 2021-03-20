@@ -1,0 +1,59 @@
+RST5.5:
+	JMP INTERRUPT
+START:
+	MVI A,0EH ;mask of RST 5.5
+	MVI B,00H ;sum of lsb
+	MVI C,00H ;sum of msb
+	MVI D,20H ;counter of interrupts (32)
+	MVI H,00H ;sum of lsb
+	MVI L,00H ;sum of msb
+	SIM
+REPEAT:
+	MOV A,D ;store counter at A to do the CPI
+	CPI 00H ;If A==0 (Z=1) go to print
+	JZ PRINT ;cause D reached zero
+	ÅÉ	 ;enable interrupts
+BEFORE:
+	MOV A,D
+	CPI 00H
+	JZ PRINT
+	EI
+WAIT:
+	JMP WAIT
+
+INTERRUPT:
+	INX SP ;we wanna keep H's value so we dont pop
+	INX SP 
+	DCR D ;counter--
+	MOV A,D ;for the cpi
+	ANI 01H
+	CPI 00H
+	JZ LSB ;if D is even -> input=LSBs
+	IN 20H ;input=MSBs
+	ANI 0FH ;x0 - x3
+	RLC
+	RLC
+	RLC
+	RLC ;4 left shifts to take the msbs
+	MOV C,A
+	JMP RETURN
+
+LSB:
+	IN 20H ;input=lsbs
+	ANI 0FH ;x0-x3
+	ADD C ;A+C
+	MOV C,A ;C=A+C
+	DAD B ;HL=HL+BC
+	JMP RETURN
+
+PRINT:
+	DI
+	DAD H
+	DAD H ;HL shift 4 times ->value of input
+	DAD H
+	DAD H
+END
+
+
+
+

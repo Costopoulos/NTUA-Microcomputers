@@ -1,0 +1,154 @@
+IN 10H		
+LXI H,0A00H	;HL=Address of msg
+MVI M,10H
+INX H		;H++
+MVI M,10H	;this stores at the 4LSB of the 7 segment
+INX H			
+MVI M,10H	
+INX H		
+MVI M,10H		
+
+START: ;that's the 0 line		
+	MVI A,FEH	;FEH = 11111110 -> select line 0
+	STA 2800H	;processing line 0
+	LDA 1800H	;read the column
+			;read comments in the report
+	ANI 07H	;XXXXXYYY -> The X are irrelevant, we only care for Y.
+	MVI C,86H	
+	CPI 06H	;if A=00000110(Z=1) then the 1st button from column 1 is pressed
+	JZ USELEDS	;so jump to useleds with C having the code for INSTR_STEP
+	MVI C,85H	;same for FETCH PC
+	CPI 05H	;if A=00000101 (2nd button)
+	JZ USELEDS	;jump to useleds
+	MVI C,F7H	;same for HRDWR STEP 
+	CPI 03H	;if A=00000011 (3rd button)
+	JZ USELEDS	;jump to useleds
+
+LINE_1:		
+	MVI A,FDH     ;FDH = 11111101 -> select line 1
+	STA 2800H	
+	LDA 1800H	
+	ANI 07H	
+	MVI C,84H
+	CPI 06H		;if (A=XXXXX110 || A=XXXXX101 || A=XXXXX011)
+	JZ USELEDS		;which mean run, fetch register, fetch addresses respectively
+	MVI C,80H		;go to useleds
+	CPI 05H		
+	JZ USELEDS
+	MVI C,82H
+	CPI 03H		
+	JZ USELEDS
+
+LINE_2:			
+	MVI A,FBH     ;FDH = 11111011 -> select line 2
+	STA 2800H		
+	LDA 1800H		
+	ANI 07H		
+	MVI C,00H
+	CPI 06H		;0
+	JZ USELEDS
+	MVI C,83H
+	CPI 05H		;STORE/INCR
+	JZ USELEDS
+	MVI C,81H
+	CPI 03H		;DECR
+	JZ USELEDS
+
+LINE_3:			
+	MVI A,F7H      ;F7H = 11110111 -> select line 3
+	STA 2800H		
+	LDA 1800H		
+	ANI 07H		
+	MVI C,01H
+	CPI 06H		;1
+	JZ USELEDS
+	MVI C,02H
+	CPI 05H		;2
+	JZ USELEDS
+	MVI C,03H
+	CPI 03H		;3
+	JZ USELEDS
+
+LINE_4:			
+	MVI A,EFH       ;EFH = 11101111 -> select line 4
+	STA 2800H		
+	LDA 1800H		
+	ANI 07H		
+	MVI C,04H
+	CPI 06H		;4
+	JZ USELEDS
+	MVI C,05H
+	CPI 05H		;5
+	JZ USELEDS
+	MVI C,06H
+	CPI 03H		;6
+	JZ USELEDS
+
+LINE_5:			
+	MVI A,DFH       ;DFH = 11011111 -> select line 5
+	STA 2800H		
+	LDA 1800H		
+	ANI 07H		
+	MVI C,07H
+	CPI 06H		;7
+	JZ USELEDS
+	MVI C,08H
+	CPI 05H		;8
+	JZ USELEDS
+	MVI C,09H
+	CPI 03H		;9
+	JZ USELEDS
+
+LINE_6:			
+	MVI A,BFH       ;BFH = 10111111 -> select line 6
+	STA 2800H		
+	LDA 1800H		
+	ANI 07H		
+	MVI C,0AH
+	CPI 06H		;A
+	JZ USELEDS
+	MVI C,0BH
+	CPI 05H		;B
+	JZ USELEDS
+	MVI C,0CH
+	CPI 03H		;C
+	JZ USELEDS
+
+LINE_7:			
+	MVI A,7FH       ;7FH = 01111111 -> select line 7
+	STA 2800H		
+	LDA 1800H		
+	ANI 07H		
+	MVI C,0DH
+	CPI 06H		;D
+	JZ USELEDS
+	MVI C,0EH
+	CPI 05H		;E
+	JZ USELEDS
+	MVI C,0FH
+	CPI 03H		;F
+	JZ USELEDS
+
+	JMP START	  ;if no button is pressed -> look again
+	
+USELEDS:
+	LXI H,0A04H
+	MOV A,C		;C has the button's code
+	ANI 0FH		;isolate the 4 LSBs (A=A && 00001111 -> only keeps right part)
+	MOV M,A		;store them to 0A00H(will be MSB)
+	INX H			;HL++
+	MOV A,C		
+	ANI F0H		;same with 4 MSBs
+	RRC			;4 right shifts to make them LSBs
+	RRC
+	RRC
+	RRC			
+	MOV M,A		;store them to 0A01(will be LSB)
+
+	LXI D,0A00H	
+	CALL STDM	;DCD routine reads at 0A05 (so we load it)
+	CALL DCD	;print
+
+	JMP START
+	;RST 1
+	END

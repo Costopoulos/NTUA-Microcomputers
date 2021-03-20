@@ -1,0 +1,33 @@
+START: 
+LDA 2000H
+	CPI 64H 		;is A higher than 99?
+	JNC HUNDREDS	;if yes go to hundreds 
+	MVI B, FFH		;else it is <=99
+DECA:
+	INR B 			;B++, B=decades
+	SUI 0AH		;Decreasing A by 10 every time so we can find the exact
+	JNC DECA		;number of decades. If carrybit>0 continue the
+				;subtraction loop
+	ADI 0AH		;fix negative remainder
+	MOV D,A		;backups value of A
+	MOV A,B		;A=B=number of decades
+	RLC
+	RLC
+	RLC			;the binary has 8 bits so we need to shift left(or right) 
+	RLC			;4 times, since we want 4 decades MSB and 4 units LSB
+	ADD C			;adding C to have the number of units,not only decades
+				;so C are the LSB
+	CMA			;A=A’(=B’)
+	LXI B, 0800H
+	STA 3000H		;output is at 3000h
+	CALL DELB		;BC*1ms delay
+	JMP START		;program is required to keep going forever
+HUNDREDS:
+	CPI C8H		;is it higher than 200?
+	JNC TWO_HUNDREDS	;if yes then go to two_hundreds
+	SUI 64H		;else just subtract 100 so we have A%100
+	JMP DECA		;go to deca to print A%100
+TWO_HUNDREDS:
+	SUI C8H		;subtract 200 so we have A%200
+	JMP DECA		;go to deca to print A%200
+END

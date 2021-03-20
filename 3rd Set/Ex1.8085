@@ -1,0 +1,99 @@
+IN 10H
+LXI H,0B00H
+MVI M,10H
+INX H		;H++
+MVI M,10H
+INX H
+MVI M,10H
+INX H
+MVI M,10H
+
+LXI B,01F4H ;T=0.5 sec so 500*0.1msec=0.5 sec
+
+START:
+	MVI A,0DH ;RST 6.5
+	SIM
+	EI	   ;Enable Interruptions
+INTERRUPT:
+	JMP INTERRUPT ;if button is pressed->stop
+INTR_ROUTINE:
+	POP H     ;pop from top of the stack
+	EI
+	MVI E,3CH ;E=60 (this will serve as a counter)
+
+USEOFCOUNTER:
+	MOV A,E ;we do this for the CPI instruction
+	DCR A	 ;E--
+	MOV E,A 
+	CPI FFH ;if A!=FFH (Z=0)
+	JNZ OUT ;jump to out, else continue
+	MVI A,00H
+	CMA     ;complementary logic
+	STA 3000H
+	JMP INTERRUPT
+
+OUT:
+	LXI H,0B04H ;2nd MSB
+	MVI D,00H   ;D=0
+DECA:
+	CPI 0AH  ;if A<10 (CY=1)
+	JC NEXT  ;jump to next, else continue
+	INR D	  ;D++
+	SUI 0AH  ;decrease by 10
+	JMP DECA ;check if there is another decade
+
+NEXT:
+	ANI 0FH  ;get the 4 LSB 
+	MOV M,A  ;store A's value
+	INX H	  ;H++
+	MOV A,D  ;store A's value
+	ANI 0FH  ;4 LSB of D
+	PUSH B   ;push B in the stack
+	PUSH D
+	PUSH PSW
+	DI	  ;Disable Interruptions
+	MVI A,FFH ;leds are on
+	CMA 	  ;complementary logic
+	STA 3000H ;where to output it
+	CALL DELB ;1 sec delay (2*1/2)
+	MVI A,FFH ;leds are off
+	STA 3000H
+	LXI D,0B00H ;output the timer
+	CALL STDM
+	CALL DCD
+	CALL DELB
+	EI
+	POP PSW
+	POP D
+	POP B	  ;empty the stack 
+	JMP USEOFCOUNTER
+END
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
